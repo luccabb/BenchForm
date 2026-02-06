@@ -97,6 +97,62 @@ Then, you can use the following command for analysis:
 python analysis_reflection.py --data_path <evaluation_results>
 ```
 
+## Data Utilities
+
+### JSONL Conversion
+
+For integration with ML evaluation frameworks that expect JSONL format, use the conversion script:
+
+```bash
+python convert_to_jsonl.py --output_dir ./jsonl_data
+```
+
+This creates JSONL files with a simplified format:
+
+```json
+{
+  "task": "causal_judgment",
+  "idx": 0,
+  "question": "Question text with answer choices...",
+  "choices": ["No", "Yes"],
+  "answer": "A",
+  "answer_text": "No"
+}
+```
+
+### Python Data Loader
+
+For programmatic access to BenchForm data, use the `BenchFormLoader` class:
+
+```python
+from benchform_loader import BenchFormLoader
+
+# Load all tasks with baseline protocol (no peer influence)
+loader = BenchFormLoader("./data/bbh", protocol="raw")
+
+# Iterate over examples
+for example in loader.iter_examples():
+    print(example["question"], example["answer"])
+
+# Load with conformity protocol (wrong guidance from peers)
+loader = BenchFormLoader(
+    "./data/bbh",
+    protocol="trust",  # or "wrong_guidance"
+    majority_num=4,    # 4 peers give wrong answer, 2 give correct
+)
+
+# Get formatted prompts with simulated peer responses
+prompts = loader.get_formatted_prompts()
+for p in prompts:
+    print(p["prompt"])  # Full prompt with peer responses
+    print(p["answer"])  # Correct answer (A, B, C, ...)
+```
+
+**Protocols:**
+- `raw`: Baseline, no peer influence
+- `trust` / `wrong_guidance`: Majority of peers provide incorrect answers
+- `doubt` / `correct_guidance`: Majority of peers provide correct answers
+
 ## Citation
 
 If you find this work useful in your research, please star our repository and consider citing:
